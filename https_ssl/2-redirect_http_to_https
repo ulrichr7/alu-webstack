@@ -1,53 +1,55 @@
-global
-        log /dev/log    local0
-        log /dev/log    local1 notice
-        chroot /var/lib/haproxy
-        stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd>
-        stats timeout 30s
-        user haproxy
-        group haproxy
-        daemon
+#!/usr/bin/env bash
 
-        # Default SSL material locations
-        ca-base /etc/ssl/certs
-        crt-base /etc/ssl/private
+# This is the ssh client system-wide configuration file.  See
+# ssh_config(5) for more information.  This file provides defaults for
+# users, and the values can be changed in per-user configuration files
+# or on the command line.
 
-        # See: https://ssl-config.mozilla.org/#server=haproxy&server-versio>
-        ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AE>
-        ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GC>
-        ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+# Configuration data is parsed as follows:
+#  1. command line options
+#  2. user-specific file
+#  3. system-wide file
+# Any configuration value is only changed the first time it is set.
+# Thus, host-specific definitions should be at the beginning of the
+# configuration file, and defaults at the end.
 
-        tune.ssl.default-dh-param 2048
-defaults
-        log     global
-        mode    http
-        option  httplog
-        option  dontlognull
-        timeout connect 5000
-        timeout client  50000
-        timeout server  50000
-        errorfile 400 /etc/haproxy/errors/400.http
-        errorfile 403 /etc/haproxy/errors/403.http
-        errorfile 408 /etc/haproxy/errors/408.http
-        errorfile 500 /etc/haproxy/errors/500.http
-        errorfile 502 /etc/haproxy/errors/502.http
-        errorfile 503 /etc/haproxy/errors/503.http
-        errorfile 504 /etc/haproxy/errors/504.http
-listen 5762-lb-01
-        bind *:80
-        mode http
-        balance roundrobin
-        option httpclose
-        option forwardfor
-        server 5646-web-02 54.90.185.73:80 check
-        server 5646-web-01 54.227.219.143:80 check
-frontend http_front
-        bind *:443 ssl crt /etc/letsencrypt/live/www.webbeni.tech/fullchain>
-        http-request add-header X-Forwarded-Proto http
-        http-request redirect scheme https if !{ ssl_fc }
-        use_backend http_back
+# Site-wide defaults for some commonly used options.  For a comprehensive
+# list of available options, their meanings and defaults, please see the
+# ssh_config(5) man page.
 
-backend http_back
-        redirect scheme https if !{ ssl_fc }
-        server 5646-web-01 54.227.219.143:80 check
-        server 5646-web-02 54.90.185.73:80 check
+Include /etc/ssh/ssh_config.d/*.conf
+
+Host *
+#   ForwardAgent no
+#   ForwardX11 no
+#   ForwardX11Trusted yes
+    PasswordAuthentication no
+#   PasswordAuthentication yes
+#   HostbasedAuthentication no
+#   GSSAPIAuthentication no
+#   GSSAPIDelegateCredentials no
+#   GSSAPIKeyExchange no
+#   GSSAPITrustDNS no
+#   BatchMode no
+#   CheckHostIP yes
+#   AddressFamily any
+#   ConnectTimeout 0
+#   StrictHostKeyChecking ask
+    IdentityFile ~/.ssh/school
+#   IdentityFile ~/.ssh/id_rsa
+#   IdentityFile ~/.ssh/id_dsa
+#   IdentityFile ~/.ssh/id_ecdsa
+#   IdentityFile ~/.ssh/id_ed25519
+#   Port 22
+#   Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc
+#   MACs hmac-md5,hmac-sha1,umac-64@openssh.com
+#   EscapeChar ~
+#   Tunnel no
+#   TunnelDevice any:any
+#   PermitLocalCommand no
+#   VisualHostKey no
+#   ProxyCommand ssh -q -W %h:%p gateway.example.com
+#   RekeyLimit 1G 1h
+    SendEnv LANG LC_*
+    HashKnownHosts yes
+    GSSAPIAuthentication yes
